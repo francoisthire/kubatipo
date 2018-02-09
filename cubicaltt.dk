@@ -154,6 +154,10 @@ def contrSingl (A : type) (a : term A) (b : term A)
       (lam A
         (j => app A a b p (min i j)))).
 
+def sym (A : type) (a : term A) (b : term A) (p : Path A a b) : Path A b a := lam A (i => app A a b p (opp i)).
+
+(; #CONV (A : type => a : term A => b : term A => p : Path A a b => (sym A b a (sym A a b p))), (A : type => a : term A => b : term A => p : Path A a b => p) --> YES ;)
+
 (; Section 4: Systems, composition, and transport ;)
 
 (; 4.1 The face lattice ;)
@@ -232,6 +236,8 @@ def fsimpl_fand : FF -> FF -> FF.
 [phi] fsimpl_fand phi 1F --> phi
 [] fsimpl_fand 0F _ --> 0F
 [] fsimpl_fand _ 0F --> 0F.
+[i] fsimpl_fand (i0 i) (i1 i) --> 0F.
+[i] fsimpl_fand (i1 i) (i0 i) --> 0F.
 
 [] fsimpl_for 1F _ --> 1F
 [] fsimpl_for _ 1F --> 1F
@@ -441,4 +447,4 @@ def trans (A : type) (a : term A) (b : term A) (c : term A)
           Path A a c :=
   lam A (trans_comp_fst A a b c p q).
 
-
+#SNF trans.

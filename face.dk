@@ -1,0 +1,184 @@
+#NAME face.
+
+(; utils ;)
+
+nat : Type.
+
+z : nat.
+
+S : nat -> nat.
+
+bool : Type.
+
+true : bool.
+
+false : bool.
+
+(; lt and eq should be called only on closed terms since they should be total ;)
+def lt : nat -> nat -> bool.
+
+[] lt _ z --> false
+[] lt z (S _) --> true
+[i,j] lt (S i) (S j) --> lt i j.
+
+def eq : nat -> nat -> bool.
+[] eq z z --> true
+[i,j] eq (S i) (S j) --> eq i j
+[i] eq z (S i) --> false
+[i] eq (S i) z --> false.
+
+def notb : bool -> bool.
+[] notb false --> true.
+[] notb true --> false.
+
+def orb : bool -> bool -> bool.
+[] orb true _ --> true.
+[] orb false true --> true.
+[] orb false false --> false.
+
+(; faces ;)
+
+i : Type.
+
+var : nat -> i.
+
+f : Type.
+
+0 : f.
+
+1 : f.
+
+i0 : i -> f.
+
+i1 : i -> f.
+
+and : f -> f -> f.
+
+or : f -> f -> f.
+
+def simpl : f -> f.
+def simpl1 : f -> f.
+def simpl2 : f -> f.
+def simpl3 : f -> f.
+def simpl4 : f -> f.
+
+(; _1 : ping
+   _2 : pong
+   _3 : pang
+;)
+
+def distri1 : f -> f.
+def distri2 : f -> f.
+def distri3 : f -> f.
+
+[a,b,c] distri1 (and (or a b) c) --> distri3 (or (distri1 (and a c)) (distri1 (and b c))).
+[a,b,c] distri1 (and a (or b c)) --> distri3 (or (distri1 (and a b)) (distri1 (and a c))).
+(; critical pair with the rule above that can be eliminating be instantiating the rule for every other cases ;)
+[a,b] distri1 (and a b) --> distri3 (and (distri1 a) (distri1 b)).
+
+[] distri1 0 --> distri2 0.
+[] distri1 1 --> distri2 1.
+[i] distri1 (i0 i) --> distri2 (i0 i).
+[i] distri1 (i1 i) --> distri2 (i1 i).
+
+[a,b,c] distri3 (and (distri2 (or a b)) c) --> distri3 (or (distri1 (and a c)) (distri1 (and b c))).
+[a,b,c] distri3 (and a (distri2 (or b c))) --> distri3 (or (distri1 (and a b)) (distri1 (and a c))).
+(; critical pair ;)
+[a,b] distri3 (and (distri2 a) (distri2 b)) --> distri2 (and a b).
+[a,b] distri3 (or (distri2 a) (distri2 b)) --> distri2 (or a b).
+
+def assoc1 : f -> f.
+def assoc2 : f -> f.
+def assoc3 : f -> f.
+
+[a,b,c] assoc1 (or (or a b) c) --> assoc3 (or (assoc1 a) (assoc1 (or b c))).
+(; critical pair ;)
+[a,b] assoc1 (or a b) --> assoc3 (or (assoc1 a) (assoc1 b)).
+[a,b,c] assoc3 (or (assoc2 (or a b)) c) --> assoc3 (or (assoc1 a) (assoc1 (or b c))).
+
+[a,b,c] assoc1 (and (and a b) c) --> assoc3 (and (assoc1 a) (assoc1 (and b c))).
+(; critical pair ;)
+[a,b] assoc1 (and a b) --> assoc3 (and (assoc1 a) (assoc1 b)).
+[a,b,c] assoc3 (and (assoc2 (and a b)) c) --> assoc3 (and (assoc1 a) (assoc1 (and b c))).
+
+[i] assoc1 (i0 i) --> assoc2 (i0 i).
+[i] assoc1 (i1 i) --> assoc2 (i1 i).
+[a,b] assoc3 (and (assoc2 a) (assoc2 b)) --> assoc2 (and a b).
+[a,b] assoc3 (or (assoc2 a) (assoc2 b)) --> assoc2 (or a b).
+
+(; remove also 1 and 0 when possible ;)
+def commute1 : f -> f.
+def commute2 : f -> f.
+def commute3 : f -> f.
+
+(; should be total ;)
+def cle : f -> f -> bool.
+[] cle (i0 _) 0 --> false.
+[] cle (i1 _) 0 --> false.
+[] cle (i0 _) 1 --> false.
+[] cle (i1 _) 1 --> false.
+[] cle 0 (i0 _) --> true.
+[] cle 0 (i1 _) --> true.
+[] cle 1 (i0 _) --> true.
+[] cle 1 (i1 _) --> true.
+[] cle 0 1 --> true.
+[i,j] cle (i0 (var i)) (i0 (var j)) --> orb (eq i j) (lt i j).
+[i,j] cle (i1 (var i)) (i1 (var j)) --> orb (eq i j) (lt i j).
+[i,j] cle (i0 (var i)) (i1 (var j)) --> orb (eq i j) (lt i j).
+[i,j] cle (i1 (var i)) (i0 (var j)) --> orb (notb (eq i j)) (lt i j).
+
+def ite : bool -> f -> f -> f.
+[l,r] ite true l r --> l.
+[l,r] ite false l r --> r.
+
+[a,b] commute1 (or a b) --> commute3 (or (commute1 a) (commute1 b)).
+[a,b,c] commute1 (and a (and b c)) --> ite (cle a b) (commute3 (and a (commute1 (and b c)))) (commute3 (and b (commute1 (and a c)))).
+[] commute1 (and 0 _) --> commute2 0.
+[a] commute1 (and 1 a) --> commute1 a.
+[i,j] commute1 (and (i0 i) (i0 j)) --> ite (cle (i0 i) (i0 j)) (commute2 (and (i0 i) (i0 j))) (commute2 (and (i0 j) (i0 i))).
+
+[a,b,c] commute3 (and a (commute2 (and b c))) --> ite (cle a b) (commute2 (and a (and b c))) (commute3 (and b (commute1 (and a c)))).
+[a,b] commute3 (or (commute2 a) (commute2 b)) --> commute2 (or a b).
+
+
+def simplify_and1 : f -> f.
+def simplify_and2 : f -> f.
+def simplify_and3 : f -> f.
+
+[a,b] simplify_and1 (or a b) --> simplify_and3 (or (simplify_and1 a) (simplify_and1 b)).
+[i,c] simplify_and1 (and (i0 i) (and (i0 i) c)) --> simplify_and3 (and (i0 i) (simplify_and1 c)).
+[i,c] simplify_and3 (and (i0 i) (and (i0 i) c)) --> simplify_and3 (and (i0 i) (simplify_and1 c)).
+[i,c] simplify_and1 (and (i1 i) (and (i1 i) c)) --> simplify_and3 (and (i1 i) (simplify_and1 c)).
+[i,c] simplify_and3 (and (i1 i) (and (i1 i) c)) --> simplify_and3 (and (i1 i) (simplify_and1 c)).
+[i,c] simplify_and1 (and (i0 i) (and (i1 i) c)) --> simplify_and2 0.
+[i,c] simplify_and3 (and (i0 i) (and (i1 i) c)) --> simplify_and2 0.
+[i] simplify_and1 (and (i0 i) (i0 i)) --> simplify_and2 (i0 i).
+[i] simplify_and3 (and (i0 i) (i0 i)) --> simplify_and2 (i0 i).
+[i] simplify_and1 (and (i1 i) (i1 i)) --> simplify_and2 (i1 i).
+[i] simplify_and3 (and (i1 i) (i1 i)) --> simplify_and2 (i1 i).
+[i] simplify_and1 (and (i0 i) (i1 i)) --> simplify_and2 0.
+[i] simplify_and3 (and (i0 i) (i1 i)) --> simplify_and2 0.
+
+[a,b,c] simplify_and1 (and a (and b c)) --> simplify_and3 (and a (simplify_and1 (and b c))).
+[a] simplify_and1 (and a 0) --> simplify_and2 0.
+[a] simplify_and1 (and a 1) --> simplify_and2 a.
+[a] simplify_and1 a --> simplify_and2 a.
+
+[a,b] simplify_and3 (and a (simplify_and2 b)) --> simplify_and2 (and a b).
+[a,b] simplify_and3 (or (simplify_and2 a) (simplify_and2 b)) --> simplify_and2 (or a b).
+
+
+[a] simpl a --> simpl1 (distri1 a).
+[a] simpl1 (distri2 a) --> simpl2 (assoc1 a).
+[a] simpl2 (assoc2 a) --> simpl3 (commute1 a).
+[a] simpl3 (commute2 a) --> simpl4 (simplify_and1 a).
+
+def a : f := i0 (var z).
+def b : f := i0 (var (S z)).
+def c : f := i0 (var (S (S z))).
+def d : f := i0 (var (S (S (S z)))).
+
+
+def phi := and (or (and a b) (or c d)) (or d a).
+
+#SNF (simpl phi).
